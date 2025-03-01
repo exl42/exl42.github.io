@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Интерактивная карта с вопросами</title>
+    <link href="https://fonts.googleapis.com/css2?family=Anonymous+Pro:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Anonymous Pro';
+            background-color: #F0F0F0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .Main {
+            height: 100vh;
+            aspect-ratio: 2830 / 1847;
+            position: relative;
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            justify-content: space-between;
+            box-sizing: border-box;
+            padding: 50px;
+        }
+
+        .Map {
+            height: 100%;
+            aspect-ratio: 1838 / 1847;
+            border-radius: 25px;
+            border: 4px #586025 solid;
+            object-fit: cover;
+            margin-right: 10px;
+        }
+
+        #figure {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-image: url('figure.png');
+            background-size: cover;
+            transition: all 2s ease;
+            top: 14%;
+            left: 18.8%;
+        }
+
+        #trailCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: calc(100% - 400px);
+            pointer-events: none;
+        }
+
+        .QuestionBlock {
+            width: 40%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .FrameQuestion {
+            width: 100%;
+            height: 65%;
+            background: #DFDACA;
+            border-radius: 25px;
+            border: 4px #586025 solid;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0px;
+            box-sizing: border-box;
+        }
+
+        .FrameButtons {
+            width: 100%;
+            height: 55%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
+            margin-top: 10px;
+        }
+
+        .Btn1, .Btn2, .Btn3, .Btn4 {
+            width: 100%;
+            height: 23.5%;
+            background: #CECEA5;
+            box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+            border-radius: 30px;
+            border: 4px #586025 solid;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: black;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .Text {
+            color: black;
+            font-size: 20px;
+            font-family: Anonymous Pro;
+            font-weight: 400;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        @media (max-width: 768px) {
+            .Main {
+                flex-direction: column;
+                height: auto;
+                max-width: 100%;
+            }
+
+            .Map {
+                width: 100%;
+                height: 50vh;
+            }
+
+            .QuestionBlock {
+                width: 100%;
+                height: auto;
+            }
+
+            .Text {
+                font-size: 16px;
+            }
+
+            .Btn1, .Btn2, .Btn3, .Btn4 {
+                font-size: 16px;
+            }
+        }
+        .modal {
+            display: none; /* Скрыто по умолчанию */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8); /* Полупрозрачный фон */
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            position: relative;
+            text-align: center;
+        }
+
+        .close {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #000;
+        }
+
+        .close:hover {
+            color: #555;
+        }
+
+        #starsOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Чтобы клики проходили сквозь картинку */
+            z-index: 1000; /* Убедимся, что картинка поверх всех элементов */
+        }
+
+        #starsOverlay img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Чтобы картинка растягивалась на всю область */
+        }
+
+        pre code {
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            background-color: #161616;
+            color: #F0F0F0;
+            padding: 10px;
+            border-radius: 5px;
+            display: block;
+            white-space: pre-wrap;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="startScreen" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
+        <div data-layer="Frame Greet" class="FrameGreet" style="width: 960px; height: 540px; position: relative">
+            <img data-layer="paper" class="Paper" style="width: 960px; height: 540px; left: 0px; top: 0px; position: absolute" src="paper.png" />
+            <div data-layer="text greet" class="TextGreet" style="width: 675px; height: 285px; left: 142px; top: 95px; position: absolute; text-align: center; color: #440505; font-size: 23px; font-family: Anonymous Pro; font-style: italic; font-weight: 400; word-wrap: break-word">
+                Добро пожаловать в мир, где магия переплетается с технологиями, а сказочные леса соседствуют с сияющими городами из стекла и света!<br/>
+                Вы — избранные героини этой истории, каждая со своим уникальным даром и судьбой.<br/>
+                Здесь, в этом IT-королевстве, вас ждут испытания и награды, смех и хорошее настроение, ваши сердца полны отваги, а умения — непревзойденны.<br/>
+                Готовы ли вы шагнуть в эту сказку, где каждый ваш выбор может изменить судьбу целых миров?<br/>
+                Тогда вперед, приключение уже начинается!
+            </div>
+            <div id="startButton" data-layer="btn" class="Btn" style="width: 242px; height: 60px; left: 50%; transform: translateX(-50%); top: 393px; position: absolute; background: #EED3A4; box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25); border-radius: 44px; border: 4.5px #C88F42 solid; cursor: pointer;">
+                <div data-layer="text" class="Text" style="width: 100%; text-align: center; color: black; font-size: 23px; font-family: Anonymous Pro; font-weight: 700; word-wrap: break-word; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                    Старт!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="Main" style="display: none;">
+        <img class="Map" src="map.png" alt="Карта" />
+        <div class="QuestionBlock">
+            <div class="FrameQuestion">
+                <div id="question" class="Text">Вопрос 1: Какой цвет у неба?</div>
+            </div>
+            <div class="FrameButtons">
+                <div class="Btn1" onclick="checkAnswer(1)">Синий</div>
+                <div class="Btn2" onclick="checkAnswer(2)">Зеленый</div>
+                <div class="Btn3" onclick="checkAnswer(3)">Красный</div>
+                <div class="Btn4" onclick="checkAnswer(4)">Желтый</div>
+            </div>
+        </div>
+        <div id="stop1" data-layer="stop1" class="Stop1" style="width: 1.5%; height: 2.3%; left: 19.5%; top: 15%; position: absolute; background: #D9D9D9; box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25); border-radius: 9999px; border: 4px #A70000 solid"></div>
+        <div id="stop2" data-layer="stop2" class="Stop2" style="width: 1.5%; height: 2.3%; left: 18.7%; top: 29.6%; position: absolute; background: #D9D9D9; box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25); border-radius: 9999px; border: 4px #A70000 solid"></div>
+        <div id="stop3" data-layer="stop3" class="Stop3" style="width: 1.5%; height: 2.3%; left: 9.3%; top: 38.5%; position: absolute; background: #D9D9D9; box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25); border-radius: 9999px; border: 4px #A70000 solid"></div>
+        <div id="stop4" data-layer="stop4" class="Stop4" style="width: 1.5%; height: 2.3%; left: 9%; top: 61%; position: absolute; background: #D9D9D9; box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25); border-radius: 9999px; border: 4px #A70000 solid"></div>
+        <div id="stop5" data-layer="stop5" class="Stop5" style="width: 1.5%; height: 2.3%; left: 22%; top: 70.3%; position: absolute; background: #D9D9D9; box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25); border-radius: 9999px; border: 4px #A70000 solid"></div>
+        <div id="stop6" data-layer="stop6" class="Stop6" style="width: 1.5%; height: 2.3%; left: 40.8%; top: 72%; position: absolute; background: #D9D9D9; box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25); border-radius: 9999px; border: 4px #A70000 solid"></div>
+        <div id="stop7" data-layer="stop7" class="Stop7" style="width: 1.5%; height: 2.3%; left: 50.7%; top: 59%; position: absolute; background: #D9D9D9; box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25); border-radius: 9999px; border: 4px #A70000 solid"></div>
+        <div id="stop8" data-layer="stop8" class="Stop8" style="width: 1.5%; height: 2.3%; left: 51.4%; top: 34%; position: absolute; background: #D9D9D9; box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25); border-radius: 9999px; border: 4px #A70000 solid"></div>
+        <div id="stop9" data-layer="stop9" class="Stop9" style="width: 1.5%; height: 2.3%; left: 37%; top: 26.7%; position: absolute; background: #D9D9D9; box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25); border-radius: 9999px; border: 4px #A70000 solid"></div>
+        <div id="stop10" data-layer="stop10" class="Stop10" style="width: 1.5%; height: 2.3%; left: 34%; top: 48%; position: absolute; background: #D9D9D9; box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25); border-radius: 9999px; border: 4px #A70000 solid"></div>
+        <audio id="correctSound" src="correct.mp3"></audio>
+        <audio id="wrongSound" src="wrong.mp3"></audio>
+        <audio id="finishSound" src="finish.mp3"></audio>
+        <div id="figure"></div>
+    </div>
+
+    <div id="videoModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <iframe width="560" height="315" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <div id="starsOverlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+        <img src="stars.gif" alt="Stars" style="width: 100%; height: 100%; object-fit: cover;">
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "Вы подходите к городским стенам, пред вами возвышаются величественные башни, и вы готовы уже попасть в город но на входе в город вас перехватывает местный дурачок- “КОЛЛЕГИ! SOS! Все сломалось, что делать?” Что посоветуете:",
+                correctAnswer: [1,2,3],
+                nextPosition: { left: '18%', top: '28.5%' },
+                stopId: "stop1",
+                options: ["“Перезагрузите браузер”", "“Перезагрузите себя”", "Перезагрузите себя", "“@remarkedsupport”"],
+                videoUrl: "https://www.youtube.com/embed/video1"
+            },
+            {
+                question: "Разобравшись с последним, вы наконец то входите в город, но на первом же брусчатом перекрестке вас встречает Фея Клавиатуры и просит почистить кэш, а как его чистить?",
+                correctAnswer: [1],
+                nextPosition: { left: '8.6%', top: '37.1%' },
+                stopId: "stop2",
+                options: ["ctrl+r", "Ты серьезно?!", "Открывай консоль,  disk:C - format", "АААА-ААА!!!"],
+                videoUrl: "https://www.youtube.com/embed/video1"
+
+            },
+            {
+                question: "Вы идете вдоль края города, и тут неожиданно вылетает дракон, ну как дракон - что то размером с кошку, вы попали на испытание от Дракона Паролей. “Дракон требует пароль!” - мяукает он, но он принимает только самые ненадежные, т.к. у него лапки. Что вы ему предложите:",
+                correctAnswer: [1,2,3,4],
+                nextPosition: { left: '8.4%', top: '60%' },
+                stopId: "stop3",
+                options: ["123456", "password", "я_не_помню", "дракон_лучший?"],
+                videoUrl: "https://www.youtube.com/embed/video1"
+
+            },
+            {
+                question: "Победив дракона, на вашем пути встречается чудак в конической шляпе, который зовет себя - Старец Апэка. вы понимаете, что теперь впереди головоломка от “Мага Приложений”.<br><br><i>“Вы застряли на необитаемом острове, и у вас есть телефон с доступом в ReMarked. Какой вариант вы выберете?”</i>",
+                correctAnswer: [1,2,3,4],
+                nextPosition: { left: '21.4%', top: '69%' },
+                stopId: "stop4",
+                options: ["Напишу сценарий, чтобы найти выход", "Сделаю бронь, чтобы написать комментарий, где я", "Начислю себе пару баллов, чтобы меня нашли", "О, касса, а вот и мой заказ…"],
+                videoUrl: "https://www.youtube.com/embed/video1"
+            },
+            {
+                question: "Казалось, что все, закончились безумные путники, и вот вы идете по улице, а вас обволакивает густой туман, вы наткнулись на Хранителя FTP-Облаков. “Облачное хранилище — это:...” - доносится до вас сквозь туман:",
+                correctAnswer: [2,3,4],
+                nextPosition: { left: '40.3%', top: '70.8%' },
+                stopId: "stop5",
+                options: ["Место, где живут облака", "Место, где хранятся ваши фото с котиками/песиками", "Место, куда исчезают все ваши файлы, когда они вам срочно нужны?", "“Ребят, можете логи посмотреть?”"],
+                videoUrl: "https://www.youtube.com/embed/video1"
+            },
+            {
+                question: "Успешно покинув туман, вы натыкаетесь на дыру в земле, из земли до вас доносится голос Гнома-Тестировщика: “Я тут нашел жука… а может другой баг, черт его знает. Эй, путник, что делать?” Ваши действия:",
+                correctAnswer: [1,2,3,4],
+                nextPosition: { left: '50.1%', top: '57.6%' },
+                stopId: "stop6",
+                options: ["Плачете в уголке", "@kasatkin_l кому задачку поставить?", "Гуглите, как стать миллионером без IT", "Сама лезу в код и устраняю баг, и жука, и гнома-тестировщика"],
+                videoUrl: "https://www.youtube.com/embed/video1"
+            },
+            {
+                question: "Вы повстречали Лесного APIльфа, который говорит на квенья, благо, речь для вас знакома, ведь сколько раз уже передавали АPI Счастья. Поговорив с ним, вы получаете у +5 к мудрости и -10 к усталости, APIльф дарит  вам  карту и пароль “метод Get_hcwc” с путем к",
+                correctAnswer: [1,2,3,4],
+                nextPosition: { left: '50.7%', top: '32.8%' },
+                stopId: "stop7",
+                options: ["Endpoint: /api/happiness", "Endpoint: /api/cash", "Endpoint: /api/wine", "Endpoint: /api/coffee"],
+                videoUrl: "https://www.youtube.com/embed/video1"
+            },
+            {
+                question: "Преисполнившись сил, вы идете в центр, шум города неожиданно смолкает, что то выбило вас, опять эти волшебники - испытание от Волшебника Автозаполнения! Автозаполнение форм предложило вам ввести имя 'КотоЧеловек'. Вы:",
+                correctAnswer: [1,2,3,4],
+                nextPosition: { left: '36.3%', top: '25.3%' },
+                stopId: "stop8",
+                options: ["Соглашаетесь", "Меняете на 'ЧеловекоКот'", "Пишете своё имя, но грустите, что не стали КотоЧеловеком.", "Мяу!"],
+                videoUrl: "https://www.youtube.com/embed/video1"
+            },
+            {
+                question: "Перед вами неожиданно выросла стена, на стене нарисованы тгроглифы, да это же Сфинкса Эмодзи! Какое эмодзи лучше всего подходит вам сейчас:",
+                correctAnswer: [1,2,3,4],
+                nextPosition: { left: '33.4%', top: '46.8%' },
+                stopId: "stop9",
+                options: ["😈 (му-ха-ха!)", "👻 (буууууу)", "🤷‍♀️ (кто знает?)", "🙀 (о боже мой)"],
+                videoUrl: "https://www.youtube.com/embed/video1"
+            },
+            {
+                question: "Вы приходите на центральную площадь, в окружении толпы стоит мужчина, он внимательно смотрит на вас и спрашивает: <pre><code>const deadline = new Date();\ndeadline.setDate(deadline.getDate() + 7);\nconsole.log(`Ваш проект будет сдан _______,: \n${deadline.toDateString()}.`);</code></pre><br>Да это же, JavaГубенатор! правда пока вы восклицали кто это, прослушали дедлайн, так когда будет сдан проект?",
+                correctAnswer: [1,2,3,4],
+                nextPosition: { left: '33.4%', top: '46.8%' },
+                stopId: "stop10",
+                options: ["“Вовремя”", "Бл*, проект…", "ХЗ", "Так уже сдан?"],
+                videoUrl: "https://www.youtube.com/embed/video1"
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let isLastQuestion = false; // Флаг для отслеживания последнего вопроса
+
+        document.getElementById('startButton').addEventListener('click', () => {
+            document.getElementById('startScreen').style.display = 'none';
+            document.querySelector('.Main').style.display = 'flex';
+            document.getElementById('question').innerText = questions[0].question;
+            const options = questions[0].options;
+            const buttons = document.querySelectorAll('.FrameButtons > div');
+            buttons.forEach((button, index) => {
+                button.innerText = options[index];
+            });
+        });
+
+        function checkAnswer(selectedAnswer) {
+            const currentQuestion = questions[currentQuestionIndex];
+            const correctAnswers = currentQuestion.correctAnswer;
+
+            if (correctAnswers.includes(selectedAnswer)) {
+                const correctSound = document.getElementById('correctSound');
+                correctSound.play();
+
+                moveFigure(currentQuestion.nextPosition);
+
+                const stopId = currentQuestion.stopId;
+                const stopElement = document.getElementById(stopId);
+                if (stopElement) {
+                    stopElement.style.borderColor = "#22A900";
+                }
+
+                // Обновляем iframe с видео
+                const iframe = document.querySelector('#videoModal iframe');
+                iframe.src = currentQuestion.videoUrl;
+
+                // Открываем модальное окно
+                openModal();
+
+                currentQuestionIndex++;
+                if (currentQuestionIndex < questions.length) {
+                    document.getElementById('question').innerHTML = questions[currentQuestionIndex].question;
+
+                    const options = questions[currentQuestionIndex].options;
+                    const buttons = document.querySelectorAll('.FrameButtons > div');
+                    buttons.forEach((button, index) => {
+                        button.innerText = options[index];
+                    });
+                } else {
+                    // Это последний вопрос
+                    isLastQuestion = true;
+                    document.getElementById('question').innerHTML = "Вы прошли все испытания, были честны сами с собой, и вас вышел поздравить Валериус Меладзиус!";
+
+                    const figure = document.getElementById('figure');
+                    figure.style.backgroundImage = "url('figure.gif')";
+                }
+            } else {
+                const wrongSound = document.getElementById('wrongSound');
+                wrongSound.play();
+
+                alert("Неправильный ответ! Попробуйте еще раз.");
+            }
+        }
+
+        function moveFigure(position) {
+            const figure = document.getElementById('figure');
+            figure.style.top = position.top;
+            figure.style.left = position.left;
+        }
+
+        // Получаем элементы модального окна
+        const modal = document.getElementById('videoModal');
+        const closeBtn = document.querySelector('.close');
+
+        // Функция для открытия модального окна
+        function openModal() {
+            modal.style.display = 'flex';
+        }
+
+        // Функция для закрытия модального окна
+        function closeModal() {
+            const modal = document.getElementById('videoModal');
+            const iframe = document.querySelector('#videoModal iframe');
+            iframe.src = "";
+            modal.style.display = 'none';
+
+            if (isLastQuestion) {
+                const finishSound = document.getElementById('finishSound');
+                finishSound.play();
+
+                const starsOverlay = document.getElementById('starsOverlay');
+                starsOverlay.style.display = 'block';
+            }
+        }
+
+        closeBtn.addEventListener('click', closeModal);
+
+        window.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+        
+    </script>
+</body>
+</html>
