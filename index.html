@@ -255,12 +255,20 @@
     </div>
 
     <div id="videoModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <iframe width="560" height="315" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-        </div>
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <iframe 
+            width="560" 
+            height="315" 
+            src="" 
+            title="YouTube video player" 
+            frameborder="0" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+            referrerpolicy="strict-origin-when-cross-origin" 
+            allowfullscreen>
+        </iframe>
     </div>
-
+</div>
     <div id="starsOverlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
         <img src="stars.gif" alt="Stars" style="width: 100%; height: 100%; object-fit: cover;">
     </div>
@@ -273,7 +281,7 @@
                 nextPosition: { left: '18%', top: '28.5%' },
                 stopId: "stop1",
                 options: ["“Перезагрузите браузер”", "“Перезагрузите себя”", "Перезагрузите себя", "“@remarkedsupport”"],
-                videoUrl: "https://youtu.be/embed/7hdvGGy-nxw?feature=shared"
+                videoUrl: "https://youtu.be/embed/7hdvGGy-nxw?si=deHvvZTT93u24z85"
             },
             {
                 question: "Разобравшись с последним, вы наконец то входите в город, но на первом же брусчатом перекрестке вас встречает Фея Клавиатуры и просит почистить кэш, а как его чистить?",
@@ -368,30 +376,30 @@
         function checkAnswer(selectedAnswer) {
             const currentQuestion = questions[currentQuestionIndex];
             const correctAnswers = currentQuestion.correctAnswer;
-
+        
             if (correctAnswers.includes(selectedAnswer)) {
                 const correctSound = document.getElementById('correctSound');
                 correctSound.play();
-
+        
                 moveFigure(currentQuestion.nextPosition);
-
+        
                 const stopId = currentQuestion.stopId;
                 const stopElement = document.getElementById(stopId);
                 if (stopElement) {
                     stopElement.style.borderColor = "#22A900";
                 }
-
+        
                 // Обновляем iframe с видео
                 const iframe = document.querySelector('#videoModal iframe');
-                iframe.src = currentQuestion.videoUrl;
-
+                iframe.src = currentQuestion.videoUrl; // Убедитесь, что videoUrl правильный
+        
                 // Открываем модальное окно
                 openModal();
-
+        
                 currentQuestionIndex++;
                 if (currentQuestionIndex < questions.length) {
                     document.getElementById('question').innerHTML = questions[currentQuestionIndex].question;
-
+        
                     const options = questions[currentQuestionIndex].options;
                     const buttons = document.querySelectorAll('.FrameButtons > div');
                     buttons.forEach((button, index) => {
@@ -401,14 +409,14 @@
                     // Это последний вопрос
                     isLastQuestion = true;
                     document.getElementById('question').innerHTML = "Вы прошли все испытания, были честны сами с собой, и вас вышел поздравить Валериус Меладзиус!";
-
+        
                     const figure = document.getElementById('figure');
                     figure.style.backgroundImage = "url('figure.gif')";
                 }
             } else {
                 const wrongSound = document.getElementById('wrongSound');
                 wrongSound.play();
-
+        
                 alert("Неправильный ответ! Попробуйте еще раз.");
             }
         }
